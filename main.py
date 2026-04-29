@@ -1,7 +1,6 @@
 from __future__ import annotations
 import base64
 import json
-from enum import Enum, auto
 from pathlib import Path
 
 import streamlit as st
@@ -103,39 +102,37 @@ st.markdown("""
 
 
 # ── Phase state machine ────────────────────────────────────────────────────────
-class Phase(Enum):
-    UPLOAD = auto()
-    CONFIRM = auto()
-    GENERATING = auto()
-    DONE = auto()
-
+# Use strings, NOT enum instances — Streamlit re-executes the script on every
+# rerun, creating a new class each time. session_state stores the old class's
+# enum instance, so `phase == Phase.UPLOAD` would always be False after rerun.
+PHASE_UPLOAD = "upload"
+PHASE_CONFIRM = "confirm"
+PHASE_GENERATING = "generating"
+PHASE_DONE = "done"
 
 if "phase" not in st.session_state:
-    st.session_state["phase"] = Phase.UPLOAD
+    st.session_state["phase"] = PHASE_UPLOAD
 
 STEP_LABELS = [
-    ("UPLOAD", Phase.UPLOAD, "① EXTRACT TASTE"),
-    ("CONFIRM", Phase.CONFIRM, "② CONFIRM"),
-    ("DESCRIBE", None, "③ DESCRIBE"),
-    ("GENERATING", Phase.GENERATING, "④ GENERATE + CRITIQUE"),
-    ("DONE", Phase.DONE, "⑤ APPROVE"),
+    (PHASE_UPLOAD,     "① EXTRACT TASTE"),
+    (PHASE_CONFIRM,    "② CONFIRM"),
+    ("describe",       "③ DESCRIBE"),
+    (PHASE_GENERATING, "④ GENERATE + CRITIQUE"),
+    (PHASE_DONE,       "⑤ APPROVE"),
 ]
-
-_PHASE_ORDER = [Phase.UPLOAD, Phase.CONFIRM, Phase.GENERATING, Phase.DONE]
 
 
 def render_step_trail() -> None:
     phase = st.session_state["phase"]
-    # Map phases to step indices: UPLOAD=0, CONFIRM=1, GENERATING=2+3, DONE=4
     current_step = {
-        Phase.UPLOAD: 0,
-        Phase.CONFIRM: 1,
-        Phase.GENERATING: 3,
-        Phase.DONE: 4,
+        PHASE_UPLOAD:     0,
+        PHASE_CONFIRM:    1,
+        PHASE_GENERATING: 3,
+        PHASE_DONE:       4,
     }.get(phase, 0)
 
     parts: list[str] = []
-    for i, (_, _, label) in enumerate(STEP_LABELS):
+    for i, (_, label) in enumerate(STEP_LABELS):
         if i < current_step:
             parts.append(f'<span class="step-done">{label}</span>')
         elif i == current_step:
@@ -246,7 +243,7 @@ if "pending_gate" in st.session_state:
             st.session_state["final_image"] = gate["image"]
             st.session_state["final_result"] = gate["result"]
             del st.session_state["pending_gate"]
-            st.session_state["phase"] = Phase.DONE
+            st.session_state["phase"] = PHASE_DONE
             st.rerun()
         if c2.button("almost — keep iterating", use_container_width=True):
             st.session_state["resume_prompt"] = gate["result"].revised_prompt
@@ -296,7 +293,7 @@ def render_upload() -> None:
                     profile = extractor.extract(tmp_paths)
                     st.session_state["taste_profile"] = profile
                     st.session_state["ref_images"] = [data for _, data in file_data]
-                    st.session_state["phase"] = Phase.CONFIRM
+                    st.session_state["phase"] = PHASE_CONFIRM
                     st.rerun()
                 except Exception as e:
                     st.error(f"Extraction failed: {e}")
@@ -356,8 +353,8 @@ def render_confirm() -> None:
             ],
         })
         st.session_state["taste_profile"] = updated
-        st.session_state["user_intent"] = user_intent.strip()
-        st.session_state["phase"] = Phase.GENERATING
+        # session_state["user_intent"] is already set by the widget key binding
+        st.session_state["phase"] = PHASE_GENERATING
         st.session_state["best_image"] = None
         st.session_state["best_score"] = 0.0
         st.rerun()
@@ -454,7 +451,7 @@ def render_generating() -> None:
                 best = st.session_state.get("best_image")
                 if best:
                     st.session_state["final_image"] = best
-                    st.session_state["phase"] = Phase.DONE
+                    st.session_state["phase"] = PHASE_DONE
                     st.rerun()
                 return
 
@@ -541,7 +538,7 @@ def render_generating() -> None:
         if result.score >= CONVERGENCE_THRESHOLD:
             st.session_state["final_image"] = image_bytes
             st.session_state["final_result"] = result
-            st.session_state["phase"] = Phase.DONE
+            st.session_state["phase"] = PHASE_DONE
             st.rerun()
             return
 
@@ -567,7 +564,7 @@ def render_generating() -> None:
             f"Best effort after {MAX_ITERATIONS} iterations (score: {best_score:.1f}/10)"
         )
     st.session_state["final_image"] = best
-    st.session_state["phase"] = Phase.DONE
+    st.session_state["phase"] = PHASE_DONE
     st.rerun()
 
 
@@ -640,11 +637,11 @@ def render_done() -> None:
 # ── Main dispatch ─────────────────────────────────────────────────────────────
 phase = st.session_state["phase"]
 
-if phase == Phase.UPLOAD:
+if phase == PHASE_UPLOAD:
     render_upload()
-elif phase == Phase.CONFIRM:
+elif phase == PHASE_CONFIRM:
     render_confirm()
-elif phase == Phase.GENERATING:
+elif phase == PHASE_GENERATING:
     render_generating()
-elif phase == Phase.DONE:
+elif phase == PHASE_DONE:
     render_done()
