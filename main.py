@@ -277,21 +277,25 @@ def render_upload() -> None:
         return
 
     if files and len(files) >= 3:
-        cols = st.columns(min(len(files), 5))
-        for col, f in zip(cols, files):
-            col.image(f, use_container_width=True)
+        # Read all bytes ONCE before any display or processing — file pointers
+        # get consumed by st.image() and can't be re-read on the next rerun
+        file_data = [(f.name, f.read()) for f in files]
+
+        cols = st.columns(min(len(file_data), 5))
+        for col, (_, data) in zip(cols, file_data):
+            col.image(data, use_container_width=True)
 
         if st.button("Extract taste →", type="primary", use_container_width=True):
             with st.spinner("Analyzing your aesthetic taste..."):
                 tmp_paths: list[Path] = []
-                for f in files:
-                    tmp = Path(f"/tmp/air_ref_{f.name}")
-                    tmp.write_bytes(f.read())
+                for name, data in file_data:
+                    tmp = Path(f"/tmp/air_ref_{name}")
+                    tmp.write_bytes(data)
                     tmp_paths.append(tmp)
                 try:
                     profile = extractor.extract(tmp_paths)
                     st.session_state["taste_profile"] = profile
-                    st.session_state["ref_images"] = [f.read() if hasattr(f, 'read') else None for f in files]
+                    st.session_state["ref_images"] = [data for _, data in file_data]
                     st.session_state["phase"] = Phase.CONFIRM
                     st.rerun()
                 except Exception as e:
