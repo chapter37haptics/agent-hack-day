@@ -1,4 +1,5 @@
 import pytest
+from pydantic import ValidationError
 from taste.profile import TasteProfile, CritiqueResult, CRITIQUE_DIMENSIONS
 from loop import initial_prompt, format_critique
 
@@ -30,6 +31,7 @@ def test_initial_prompt_includes_principles():
     out = initial_prompt("a street in Tokyo", p)
     assert "prefers asymmetry" in out
     assert "warm tones only" in out
+    assert ";" in out  # principles are separated by semicolons
 
 
 def test_initial_prompt_formats_avoid_list():
@@ -53,7 +55,7 @@ def test_format_critique_iterates_critique_dimensions_order():
 
 
 def test_taste_profile_rejects_empty_principles():
-    with pytest.raises(Exception):
+    with pytest.raises(ValidationError):
         TasteProfile(
             principles=[],
             palette_tendency="warm",
@@ -65,5 +67,5 @@ def test_taste_profile_rejects_empty_principles():
 
 
 def test_critique_result_rejects_out_of_range_score():
-    with pytest.raises(Exception):
+    with pytest.raises(ValidationError):
         CritiqueResult(score=15.0, breakdown={}, reasoning="", revised_prompt="")
