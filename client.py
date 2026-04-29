@@ -14,7 +14,10 @@ _openai_client = openai.OpenAI(
 )
 
 # Instructor-wrapped for structured output (extractor, critic)
-instructor_client: instructor.Instructor = instructor.from_openai(_openai_client)
+# Use JSON mode — tokenrouter does not support tool_calls (Mode.TOOLS fails with 403)
+instructor_client: instructor.Instructor = instructor.from_openai(
+    _openai_client, mode=instructor.Mode.JSON
+)
 
 # Raw client for image generation and probing
 raw_client: openai.OpenAI = _openai_client
