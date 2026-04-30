@@ -1,0 +1,7 @@
+.env
+__pycache__/
+*.pyc
+.pytest_cache/
+.gstack/
+.playwright-mcp/
+chapter37haptics-agent-hack-day/

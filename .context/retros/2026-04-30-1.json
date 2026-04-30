@@ -1,0 +1,51 @@
+{
+  "date": "2026-04-30",
+  "window": "7d",
+  "metrics": {
+    "commits": 14,
+    "contributors": 1,
+    "prs_merged": 0,
+    "insertions": 1563,
+    "deletions": 121,
+    "net_loc": 1442,
+    "test_loc": 73,
+    "test_ratio": 0.047,
+    "active_days": 2,
+    "sessions": 3,
+    "deep_sessions": 1,
+    "avg_session_minutes": 22,
+    "loc_per_session_hour": 1331,
+    "feat_pct": 0.57,
+    "fix_pct": 0.21,
+    "docs_pct": 0.07,
+    "chore_pct": 0.07,
+    "peak_hour": 22,
+    "ai_assisted_commits": 8,
+    "ai_assisted_pct": 57
+  },
+  "authors": {
+    "chapter37haptics": {
+      "commits": 14,
+      "insertions": 1563,
+      "deletions": 121,
+      "test_ratio": 0.047,
+      "top_area": "main.py"
+    }
+  },
+  "version_range": ["initial", "initial"],
+  "streak_days": 2,
+  "tweetable": "Week of Apr 23: 14 commits, 1.4k net LOC, 57% feat, 21% fix — shipped AIR generator from zero to live in one night | Streak: 2d",
+  "test_health": {
+    "total_test_files": 1,
+    "tests_added_this_period": 1,
+    "regression_test_commits": 0,
+    "test_files_changed": 2
+  },
+  "eureka": [
+    {
+      "skill": "office-hours",
+      "insight": "Style transfer (LoRA/CLIP) copies surface appearance; taste is about underlying principles. Same taste can manifest across very different-looking images."
+    }
+  ],
+  "learnings_logged": 12
+}

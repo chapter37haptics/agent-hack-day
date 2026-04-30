@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AIR Generator — Wireframe</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #111; color: #e0e0e0; font-family: 'Courier New', monospace; font-size: 13px; min-height: 100vh; }
+  .app { display: grid; grid-template-columns: 420px 1fr; grid-template-rows: 48px 1fr; height: 100vh; }
+
+  /* Header */
+  .header { grid-column: 1 / -1; background: #1a1a1a; border-bottom: 1px solid #2a2a2a; display: flex; align-items: center; padding: 0 20px; gap: 16px; }
+  .header .logo { font-size: 15px; font-weight: bold; letter-spacing: 0.1em; color: #fff; }
+  .header .step-trail { display: flex; align-items: center; gap: 8px; color: #555; font-size: 11px; }
+  .header .step-trail .active { color: #c8a96e; }
+  .header .step-trail .done { color: #4a8; }
+  .sep { color: #333; }
+
+  /* Left panel */
+  .left { background: #161616; border-right: 1px solid #222; overflow-y: auto; display: flex; flex-direction: column; gap: 0; }
+  .section { border-bottom: 1px solid #222; padding: 16px; }
+  .section-label { font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: #555; margin-bottom: 12px; }
+
+  /* Reference images */
+  .ref-images { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  .ref-img { aspect-ratio: 1; background: #222; border: 1px dashed #333; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #444; cursor: pointer; }
+  .ref-img.filled { border: 1px solid #3a3a3a; background: #1e1e1e; }
+  .ref-img.filled::after { content: "img"; color: #555; }
+
+  /* Taste profile */
+  .taste-principles { display: flex; flex-direction: column; gap: 6px; }
+  .principle { background: #1c1c1c; border-left: 2px solid #c8a96e; padding: 6px 10px; font-size: 12px; color: #bbb; line-height: 1.4; }
+  .principle.negative { border-left-color: #7a3a3a; color: #999; }
+  .confirm-bar { display: flex; gap: 8px; margin-top: 10px; }
+  .btn { padding: 6px 14px; font-family: 'Courier New', monospace; font-size: 11px; border: 1px solid #333; background: none; color: #bbb; cursor: pointer; letter-spacing: 0.05em; }
+  .btn.primary { border-color: #c8a96e; color: #c8a96e; }
+
+  /* Generation prompt */
+  .prompt-input { width: 100%; background: #1c1c1c; border: 1px solid #333; color: #e0e0e0; font-family: 'Courier New', monospace; font-size: 12px; padding: 8px; resize: vertical; min-height: 60px; }
+  .prompt-input:focus { outline: none; border-color: #555; }
+
+  /* Critique loop */
+  .iterations { display: flex; flex-direction: column; gap: 8px; }
+  .iteration { background: #1a1a1a; border: 1px solid #252525; padding: 10px 12px; }
+  .iter-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .iter-num { font-size: 10px; color: #555; letter-spacing: 0.1em; }
+  .iter-score { font-size: 11px; }
+  .score-low { color: #c87; }
+  .score-mid { color: #ca6; }
+  .score-high { color: #4a8; }
+  .iter-critique { font-size: 11px; color: #888; line-height: 1.5; margin-bottom: 6px; }
+  .iter-delta { font-size: 10px; color: #666; font-style: italic; }
+  .iter-active { border-color: #c8a96e; }
+  .spinner { display: inline-block; width: 8px; height: 8px; border: 1px solid #555; border-top-color: #c8a96e; border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Human gate */
+  .human-gate { background: #1e1a14; border: 1px solid #4a3a20; padding: 12px; }
+  .gate-question { font-size: 12px; color: #c8a96e; margin-bottom: 8px; }
+  .gate-options { display: flex; gap: 8px; flex-wrap: wrap; }
+  .gate-option { padding: 4px 10px; border: 1px solid #4a3a20; font-size: 11px; color: #9a7a4a; cursor: pointer; font-family: 'Courier New', monospace; }
+
+  /* Right panel */
+  .right { background: #0f0f0f; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px; gap: 16px; position: relative; }
+  .image-area { width: 100%; max-width: 480px; aspect-ratio: 1; background: #1a1a1a; border: 1px solid #252525; display: flex; align-items: center; justify-content: center; position: relative; }
+  .image-placeholder { color: #333; font-size: 12px; text-align: center; }
+  .image-overlay { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.7); padding: 8px 12px; font-size: 11px; }
+  .match-score { color: #4a8; font-size: 22px; font-weight: bold; }
+  .match-label { color: #555; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; margin-top: 2px; }
+  .iteration-counter { color: #555; font-size: 11px; }
+  .approve-section { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%; max-width: 480px; }
+
+  /* Annotations */
+  .annotation { position: absolute; background: rgba(200, 169, 110, 0.1); border: 1px dashed #c8a96e; color: #c8a96e; font-size: 9px; padding: 2px 5px; letter-spacing: 0.05em; pointer-events: none; }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- Header: step progress trail -->
+  <div class="header">
+    <span class="logo">AIR</span>
+    <div class="step-trail">
+      <span class="done">① EXTRACT TASTE</span>
+      <span class="sep">›</span>
+      <span class="done">② CONFIRM</span>
+      <span class="sep">›</span>
+      <span class="done">③ DESCRIBE</span>
+      <span class="sep">›</span>
+      <span class="active">④ GENERATE + CRITIQUE</span>
+      <span class="sep">›</span>
+      <span>⑤ APPROVE</span>
+    </div>
+  </div>
+
+  <!-- Left panel -->
+  <div class="left">
+
+    <!-- Reference Images -->
+    <div class="section">
+      <div class="section-label">reference images (5)</div>
+      <div class="ref-images">
+        <div class="ref-img filled"></div>
+        <div class="ref-img filled"></div>
+        <div class="ref-img filled"></div>
+        <div class="ref-img filled"></div>
+        <div class="ref-img filled"></div>
+      </div>
+    </div>
+
+    <!-- Extracted Taste Profile -->
+    <div class="section">
+      <div class="section-label">extracted taste profile · confirmed ✓</div>
+      <div class="taste-principles">
+        <div class="principle">prefers asymmetric compositions with deliberate negative space</div>
+        <div class="principle">warm, desaturated palette — amber, bone, shadow grey</div>
+        <div class="principle">human presence implied but not shown directly</div>
+        <div class="principle">analog texture: grain, imperfection, not clean digital render</div>
+        <div class="principle">emotional register: quiet melancholy, not sadness</div>
+        <div class="principle negative">AVOID: saturated colors, centered subjects, clean linework</div>
+      </div>
+    </div>
+
+    <!-- Generation Prompt -->
+    <div class="section">
+      <div class="section-label">generation prompt</div>
+      <textarea class="prompt-input" readonly>a street in Tokyo at dusk, empty</textarea>
+    </div>
+
+    <!-- Critique Iterations -->
+    <div class="section">
+      <div class="section-label">critique loop</div>
+      <div class="iterations">
+
+        <div class="iteration">
+          <div class="iter-header">
+            <span class="iter-num">ITERATION 1</span>
+            <span class="iter-score score-low">taste match: 3.2 / 10</span>
+          </div>
+          <div class="iter-critique">Colors too saturated, composition is centered. Neon signs are prominent — directly contradicts extracted taste.</div>
+          <div class="iter-delta">→ revised prompt: emphasize grain, desaturate, shift subject to edge-frame</div>
+        </div>
+
+        <div class="iteration">
+          <div class="iter-header">
+            <span class="iter-num">ITERATION 2</span>
+            <span class="iter-score score-mid">taste match: 6.1 / 10</span>
+          </div>
+          <div class="iter-critique">Better palette. But subject still centered, texture missing. Negative space used too evenly.</div>
+          <div class="iter-delta">→ revised prompt: off-axis framing, add film grain, reduce mid-tones</div>
+        </div>
+
+        <div class="iteration iter-active">
+          <div class="iter-header">
+            <span class="iter-num">ITERATION 3 <span class="spinner"></span></span>
+            <span class="iter-score" style="color:#555">evaluating...</span>
+          </div>
+          <div class="iter-critique" style="color:#444">critic is analyzing generated image against taste principles...</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Human Gate (only appears when critic is uncertain) -->
+    <div class="section">
+      <div class="human-gate">
+        <div class="gate-question">critic is uncertain (score: 7.2). does this feel like your taste?</div>
+        <div class="gate-options">
+          <div class="gate-option">yes — approve</div>
+          <div class="gate-option">almost — keep iterating</div>
+          <div class="gate-option">no — restart</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Right panel: generated image + score -->
+  <div class="right">
+    <div class="image-area">
+      <!-- Simulated generated image using CSS gradient approximation -->
+      <div style="width:100%;height:100%;background:linear-gradient(165deg,#1a1510 0%,#2a2018 30%,#181210 60%,#0e0c0a 100%);display:flex;align-items:flex-end;padding:16px;">
+        <div style="color:#665544;font-size:11px;opacity:0.6">[ iteration 2 output — last evaluated ]</div>
+      </div>
+      <div class="image-overlay">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <div class="match-score">6.1</div>
+            <div class="match-label">taste match score</div>
+          </div>
+          <div style="text-align:right;">
+            <div class="iteration-counter">iteration 2 of max 5</div>
+            <div style="color:#4a3a20;font-size:10px;margin-top:2px;">improving ↑</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="approve-section">
+      <div style="color:#555;font-size:11px;letter-spacing:0.05em;">waiting for iteration 3 to complete...</div>
+      <div style="display:flex;gap:10px;opacity:0.3;">
+        <button class="btn primary" disabled>approve this version</button>
+        <button class="btn" disabled>export taste.md</button>
+      </div>
+    </div>
+
+    <!-- Taste match breakdown (visible when score > 7) -->
+    <div style="width:100%;max-width:480px;background:#141414;border:1px solid #1e1e1e;padding:14px;">
+      <div style="font-size:10px;color:#444;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:10px;">last critique breakdown</div>
+      <div style="display:flex;flex-direction:column;gap:5px;">
+        <div style="display:flex;justify-content:space-between;font-size:11px;"><span style="color:#666">palette</span><span style="color:#4a8">✓ 8/10</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;"><span style="color:#666">composition</span><span style="color:#ca6">~ 5/10</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;"><span style="color:#666">texture / analog feel</span><span style="color:#c87">✗ 4/10</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;"><span style="color:#666">emotional register</span><span style="color:#4a8">✓ 8/10</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;"><span style="color:#666">avoid-list violations</span><span style="color:#4a8">✓ clean</span></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Wireframe annotations overlay -->
+<div style="position:fixed;bottom:8px;right:8px;font-size:9px;color:#444;font-family:Courier New,monospace;text-align:right;line-height:1.8;">
+  wireframe — AIR generator v0<br>
+  approach B: agentic loop + ui<br>
+  gstack /office-hours
+</div>
+
+</body>
+</html>
